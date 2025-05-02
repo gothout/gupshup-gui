@@ -15,10 +15,10 @@ func LoadEnv() {
 	}
 }
 
-func GetDatabaseURL() string {
+func GetEmail() string {
 	return os.Getenv("EMAIL")
 }
 
-func GetDatabaseUser() string {
+func GetSenha() string {
 	return os.Getenv("SENHA")
 }

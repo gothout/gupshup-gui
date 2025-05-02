@@ -7,6 +7,7 @@ import (
 	"fmt"
 	model "gupshup-gui/internal/app/model/auth"
 	config "gupshup-gui/package/configuration/config"
+	env "gupshup-gui/package/configuration/env"
 	"net/http"
 	"net/url"
 	"time"
@@ -86,4 +87,12 @@ func (s *loginServiceImpl) GetCachedToken() (*model.TokenCache, bool) {
 		return nil, false
 	}
 	return token.(*model.TokenCache), true
+}
+
+func (s *loginServiceImpl) ForceLogin() (*model.TokenCache, error) {
+	partner := model.Partner{
+		Email:    env.GetEmail(),
+		Password: env.GetSenha(),
+	}
+	return s.Authenticate(partner)
 }
