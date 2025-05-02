@@ -3,30 +3,20 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 
-	// Importa os pacotes internos do app
-	controller "gupshup-gui/internal/app/controller/auth"
-	handler "gupshup-gui/internal/app/handler/auth"
-	service "gupshup-gui/internal/app/service/auth"
+	authHandler "gupshup-gui/internal/app/handler/auth"
+	appHandler "gupshup-gui/internal/app/handler/partner/app"
 	serverMiddleware "gupshup-gui/package/middleware/server"
 )
 
 func main() {
-	// 🔧 Inicializa a camada de serviço (login e cache de token)
-	svc := service.NewLoginService()
-
-	// 🎯 Inicializa o controller e injeta o serviço (controlador orquestra a lógica)
-	ctrl := controller.NewLoginController(svc)
-
-	// 🔐 Realiza o login assim que a aplicação inicia e guarda o token no cache
-	ctrl.HandleLogin()
-
 	// 🌐 Inicia o servidor HTTP com o framework Gin
 	r := gin.Default()
 
-	// 🛣️ Registra as rotas relacionadas à autenticação no grupo /auth
-	// Ex: GET /auth/token → retorna token atual
-	handler.RegisterAuthRoutes(r, ctrl)
-	// Middleware para 404
+	// 🛣️ Cada handler se encarrega de registrar suas rotas e montar controller + service
+	authHandler.RegisterAuthRoutes(r)
+	appHandler.RegisterAppRoutes(r)
+
+	// ❌ Middleware para rotas não encontradas
 	r.NoRoute(serverMiddleware.NotFoundMiddleware())
 
 	// 🚀 Inicia o servidor na porta 8080

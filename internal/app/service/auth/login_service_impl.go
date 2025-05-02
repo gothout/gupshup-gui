@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	model "gupshup-gui/internal/app/model/auth"
+	config "gupshup-gui/package/configuration/config"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,15 +14,19 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+var gupshupTokenCache = cache.New(1*time.Hour, 10*time.Minute)
+
 type loginServiceImpl struct {
 	cache *cache.Cache
 }
 
-const URLPartner = "https://partner.gupshup.io/"
-
 func NewLoginService() LoginService {
-	c := cache.New(1*time.Hour, 10*time.Minute)
-	return &loginServiceImpl{cache: c}
+	/*************  ✨ Windsurf Command ⭐  *************/
+	// NewLoginService retorna uma inst ncia do LoginService
+	// que ir  utiliza o cache global para armazenar o token
+	// de autentica o da Gupshup.
+	/*******  8ffd7530-6246-4ae3-9b2f-427a4a259272  *******/
+	return &loginServiceImpl{cache: gupshupTokenCache}
 }
 
 func (s *loginServiceImpl) Authenticate(p model.Partner) (*model.TokenCache, error) {
@@ -35,7 +40,7 @@ func (s *loginServiceImpl) Authenticate(p model.Partner) (*model.TokenCache, err
 	form.Add("email", p.Email)
 	form.Add("password", p.Password)
 
-	req, err := http.NewRequest("POST", URLPartner+"partner/account/login", bytes.NewBufferString(form.Encode()))
+	req, err := http.NewRequest("POST", config.URLPartner+"partner/account/login", bytes.NewBufferString(form.Encode()))
 	if err != nil {
 		return nil, err
 	}

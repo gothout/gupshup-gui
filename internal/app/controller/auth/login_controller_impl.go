@@ -17,12 +17,13 @@ func NewLoginController(svc service.LoginService) LoginController {
 }
 
 func (c *loginControllerImpl) HandleLogin() {
-
 	env.LoadEnv()
-	if os.Getenv("EMAIL") == "" && os.Getenv("SENHA") == "" {
-		fmt.Println("O usuario e senha nao foram informados no .env")
+
+	if os.Getenv("EMAIL") == "" || os.Getenv("SENHA") == "" {
+		fmt.Println("⚠️  O usuário e senha não foram informados no .env")
 		os.Exit(1)
 	}
+
 	partner := model.Partner{
 		Email:    os.Getenv("EMAIL"),
 		Password: os.Getenv("SENHA"),
@@ -30,10 +31,11 @@ func (c *loginControllerImpl) HandleLogin() {
 
 	token, err := c.service.Authenticate(partner)
 	if err != nil {
-		fmt.Println("Erro ao autenticar:", err)
+		fmt.Println("❌ Erro ao autenticar:", err)
 		return
 	}
-	fmt.Println("Token atual:", token)
+
+	fmt.Println("🔐 Token atual:", token.Token)
 }
 
 func (c *loginControllerImpl) FetchToken() (*model.TokenCache, bool) {
