@@ -7,4 +7,5 @@ import (
 // AppController define as ações disponíveis para manipular os apps da Gupshup
 type AppController interface {
 	GetApps() (*ent.PartnerAppsResponse, error)
+	GetAppToken(appID string) (*ent.PartnerAppToken, error)
 }

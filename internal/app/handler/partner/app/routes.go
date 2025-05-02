@@ -17,4 +17,5 @@ func RegisterAppRoutes(r *gin.Engine) {
 
 	group := r.Group("/partner")
 	group.GET("/apps", handler.GetAppsHandler)
+	group.GET("/apps/:app_id/token", handler.GetAppTokenHandler)
 }

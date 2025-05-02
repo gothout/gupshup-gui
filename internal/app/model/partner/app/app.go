@@ -1,5 +1,10 @@
 package app
 
+type PartnerAppToken struct {
+	AppID string
+	Token string
+}
+
 type PartnerApp struct {
 	ID             string  `json:"id"`
 	Name           string  `json:"name"`

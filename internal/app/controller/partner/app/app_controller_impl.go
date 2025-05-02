@@ -19,3 +19,7 @@ func NewAppController(service partner.PartnerService) AppController {
 func (c *appControllerImpl) GetApps() (*ent.PartnerAppsResponse, error) {
 	return c.service.AppService().GetApps()
 }
+
+func (c *appControllerImpl) GetAppToken(appID string) (*ent.PartnerAppToken, error) {
+	return c.service.AppService().GetAppToken(appID)
+}
