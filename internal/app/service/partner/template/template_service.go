@@ -1,0 +1,9 @@
+package template
+
+import (
+	ent "gupshup-gui/internal/app/model/partner/template"
+)
+
+type TemplateService interface {
+	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
+}
