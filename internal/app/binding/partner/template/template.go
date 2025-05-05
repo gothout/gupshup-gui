@@ -6,6 +6,7 @@ import (
 
 type CreateTemplateInput struct {
 	ElementName               string                    `json:"elementName" binding:"required"`
+	Vertical                  string                    `json:"vertical" binding:"required,min=3,max=70"`
 	LanguageCode              string                    `json:"languageCode" binding:"required"`
 	Category                  string                    `json:"category" binding:"required"`
 	TemplateType              string                    `json:"templateType" binding:"required"`
@@ -26,6 +27,7 @@ type CreateTemplateInput struct {
 func (c *CreateTemplateInput) ToTemplateCreateRequest() *template.TemplateCreateRequest {
 	return &template.TemplateCreateRequest{
 		ElementName:                 c.ElementName,
+		Vertical:                    c.Vertical,
 		LanguageCode:                c.LanguageCode,
 		Category:                    c.Category,
 		TemplateType:                c.TemplateType,

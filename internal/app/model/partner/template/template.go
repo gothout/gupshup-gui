@@ -52,6 +52,7 @@ type PartnerTemplate struct {
 // TemplateCreateRequest representa a estrutura para criação de um template de mensagem.
 type TemplateCreateRequest struct {
 	ElementName  string `json:"elementName" binding:"required,min=3,max=50,elementname"` // Nome do template (único por namespace da WABA)
+	Vertical     string `json:"vertical" binding: "required,min=3,max=50,vertical"`      // Nome bonito do template.
 	LanguageCode string `json:"languageCode"`                                            // Código de idioma, ex: en_US, pt_BR
 	Category     string `json:"category"`                                                // Categoria: AUTHENTICATION, MARKETING ou UTILITY
 	TemplateType string `json:"templateType"`                                            // Tipo do template: TEXT, IMAGE, LOCATION, PRODUCT, CATALOG, CAROUSEL, VIDEO, DOCUMENT

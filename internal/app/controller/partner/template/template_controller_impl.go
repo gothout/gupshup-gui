@@ -24,6 +24,6 @@ func (c *templateControllerImpl) GetTemplateByID(appID, templateID string) (*ent
 	return c.service.TemplateService().GetTemplateByID(appID, templateID)
 }
 
-func (c *templateControllerImpl) CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.PartnerTemplate, error) {
+func (c *templateControllerImpl) CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error) {
 	return c.service.TemplateService().CreateTemplateText(appID, template)
 }

@@ -1,7 +1,6 @@
 package template
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"gupshup-gui/internal/app/model/partner/template"
@@ -10,6 +9,8 @@ import (
 	"gupshup-gui/package/configuration/config"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 type templateServiceImpl struct {
@@ -95,51 +96,65 @@ func (s *templateServiceImpl) GetTemplateByID(appID, templateID string) (*templa
 }
 
 // CreateTemplateText cria um template de texto para a aplicação especificada pelo appID.
-func (s *templateServiceImpl) CreateTemplateText(appID string, tpl template.TemplateCreateRequest) (*template.PartnerTemplate, error) {
-	// Obtem token da aplicação
+func (s *templateServiceImpl) CreateTemplateText(appID string, tpl template.TemplateCreateRequest) (*template.TemplateCreateRequest, error) {
+	// 1. Obtem token da aplicação
 	appToken, err := appService.NewPartnerAppService(s.auth).GetAppToken(appID)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao obter token da aplicação: %w", err)
 	}
 
-	// Garante os campos obrigatórios
+	// 2. Garante os campos obrigatórios
 	tpl.EnableSample = true
 	tpl.AllowTemplateCategoryChange = true
 
-	// Serializa o payload
-	bodyBytes, err := json.Marshal(tpl)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao serializar payload: %w", err)
+	// 3. Monta o corpo como form-urlencoded
+	form := url.Values{}
+	form.Set("elementName", tpl.ElementName)
+	form.Set("languageCode", tpl.LanguageCode)
+	form.Set("category", tpl.Category)
+	form.Set("templateType", tpl.TemplateType)
+	form.Set("vertical", tpl.Vertical)
+	form.Set("header", tpl.Header)
+	form.Set("content", tpl.Content)
+	form.Set("footer", tpl.Footer)
+	form.Set("example", tpl.Example)
+	form.Set("exampleHeader", tpl.ExampleHeader)
+	form.Set("enableSample", "true")
+	form.Set("allowTemplateCategoryChange", "true")
+
+	// 👇 Serializa os botões se houverem
+	if len(tpl.Buttons) > 0 {
+		buttonsBytes, err := json.Marshal(tpl.Buttons)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao serializar botões: %w", err)
+		}
+		form.Set("buttons", string(buttonsBytes))
 	}
 
-	// Monta a URL da API
+	// 4. Cria requisição
 	url := fmt.Sprintf("%spartner/app/%s/templates", config.URLPartner, appID)
-
-	// Cria e envia a requisição
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest("POST", url, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+appToken.Token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
+	// 5. Envia
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao enviar requisição: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Verifica status da resposta
+	// 6. Valida resposta
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("erro na criação do template: %s", string(respBody))
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("erro na criação do template: %s", string(body))
 	}
 
-	// Decodifica a resposta
-	var createdTemplate template.PartnerTemplate
-	if err := json.NewDecoder(resp.Body).Decode(&createdTemplate); err != nil {
-		return nil, fmt.Errorf("erro ao decodificar resposta: %w", err)
-	}
+	// Ignora o decode da resposta — você confia que deu certo
+	io.Copy(io.Discard, resp.Body) // consome o body só pra fechar corretamente
 
-	return &createdTemplate, nil
+	return &tpl, nil // Retorna o que foi enviado
 }
