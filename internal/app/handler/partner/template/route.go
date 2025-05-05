@@ -22,4 +22,5 @@ func RegisterAppRoutes(r *gin.Engine) {
 	group.GET("/apps/:app_id/templates", templateHandler.GetTemplatesHandler)
 	group.GET("/apps/:app_id/templates/:template_id", templateHandler.GetTemplateByIDHandler)
 	group.POST("/apps/:app_id/templates", templateHandler.CreateTemplateTextHandler)
+	group.POST("/upload/image/:app_id", templateHandler.UploadImageHandler)
 }

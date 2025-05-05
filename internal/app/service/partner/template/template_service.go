@@ -8,4 +8,5 @@ type TemplateService interface {
 	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
 	GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error)
 	CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error)
+	UploadImageForTemplate(appID string, filePath string) (imageCode string, err error)
 }

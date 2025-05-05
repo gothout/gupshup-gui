@@ -1,6 +1,7 @@
 package template
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"gupshup-gui/internal/app/model/partner/template"
@@ -8,8 +9,11 @@ import (
 	appService "gupshup-gui/internal/app/service/partner/app"
 	"gupshup-gui/package/configuration/config"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -157,4 +161,74 @@ func (s *templateServiceImpl) CreateTemplateText(appID string, tpl template.Temp
 	io.Copy(io.Discard, resp.Body) // consome o body só pra fechar corretamente
 
 	return &tpl, nil // Retorna o que foi enviado
+}
+
+func (s *templateServiceImpl) UploadImageForTemplate(appID string, filePath string) (string, error) {
+	// 1. Obtem o token da aplicação
+	appToken, err := appService.NewPartnerAppService(s.auth).GetAppToken(appID)
+	if err != nil {
+		return "", fmt.Errorf("erro ao obter token da aplicação: %w", err)
+	}
+
+	// 2. Abre o arquivo da imagem
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("erro ao abrir arquivo de imagem: %w", err)
+	}
+	defer file.Close()
+
+	// 3. Cria o corpo multipart
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	// Campo do arquivo
+	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+	if err != nil {
+		return "", fmt.Errorf("erro ao criar campo do arquivo: %w", err)
+	}
+	if _, err = io.Copy(part, file); err != nil {
+		return "", fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
+	}
+
+	// Campo do tipo de arquivo
+	if err := writer.WriteField("file_type", "image/png"); err != nil {
+		return "", fmt.Errorf("erro ao adicionar campo file_type: %w", err)
+	}
+
+	writer.Close()
+
+	// 4. Monta a requisição
+	url := fmt.Sprintf("%spartner/app/%s/upload", config.URLPartner, appID)
+	req, err := http.NewRequest("POST", url, &requestBody)
+	if err != nil {
+		return "", fmt.Errorf("erro ao criar requisição: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+appToken.Token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// 5. Envia
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("erro ao enviar requisição: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 6. Lê e decodifica resposta
+	var result struct {
+		Status   string `json:"status"`
+		HandleID struct {
+			Message string `json:"message"`
+		} `json:"handleId"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("erro ao decodificar resposta (%s): %w", string(body), err)
+	}
+
+	if result.Status != "success" || result.HandleID.Message == "" {
+		return "", fmt.Errorf("upload falhou ou handleId ausente: %+v", result)
+	}
+
+	return result.HandleID.Message, nil
 }
