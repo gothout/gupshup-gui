@@ -1,6 +1,7 @@
 package template
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"gupshup-gui/internal/app/model/partner/template"
@@ -91,4 +92,54 @@ func (s *templateServiceImpl) GetTemplateByID(appID, templateID string) (*templa
 	}
 
 	return &result, nil
+}
+
+// CreateTemplateText cria um template de texto para a aplicação especificada pelo appID.
+func (s *templateServiceImpl) CreateTemplateText(appID string, tpl template.TemplateCreateRequest) (*template.PartnerTemplate, error) {
+	// Obtem token da aplicação
+	appToken, err := appService.NewPartnerAppService(s.auth).GetAppToken(appID)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao obter token da aplicação: %w", err)
+	}
+
+	// Garante os campos obrigatórios
+	tpl.EnableSample = true
+	tpl.AllowTemplateCategoryChange = true
+
+	// Serializa o payload
+	bodyBytes, err := json.Marshal(tpl)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao serializar payload: %w", err)
+	}
+
+	// Monta a URL da API
+	url := fmt.Sprintf("%spartner/app/%s/templates", config.URLPartner, appID)
+
+	// Cria e envia a requisição
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+appToken.Token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao enviar requisição: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Verifica status da resposta
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("erro na criação do template: %s", string(respBody))
+	}
+
+	// Decodifica a resposta
+	var createdTemplate template.PartnerTemplate
+	if err := json.NewDecoder(resp.Body).Decode(&createdTemplate); err != nil {
+		return nil, fmt.Errorf("erro ao decodificar resposta: %w", err)
+	}
+
+	return &createdTemplate, nil
 }

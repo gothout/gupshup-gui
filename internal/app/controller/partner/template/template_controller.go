@@ -8,4 +8,5 @@ import (
 type TemplateController interface {
 	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
 	GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error)
+	CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.PartnerTemplate, error)
 }
