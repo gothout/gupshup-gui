@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-// Struct que representa o token do app
-
 // Estrutura do service
 type partnerAppServiceImpl struct {
 	auth           authService.LoginService

@@ -20,4 +20,5 @@ func RegisterAppRoutes(r *gin.Engine) {
 
 	group := r.Group("/app")
 	group.GET("/apps/:app_id/templates", templateHandler.GetTemplatesHandler)
+	group.GET("/apps/:app_id/templates/:template_id", templateHandler.GetTemplateByIDHandler)
 }

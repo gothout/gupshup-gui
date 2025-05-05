@@ -6,4 +6,5 @@ import (
 
 type TemplateService interface {
 	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
+	GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error)
 }

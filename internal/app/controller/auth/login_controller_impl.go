@@ -32,7 +32,7 @@ func (c *loginControllerImpl) HandleLogin() {
 	token, err := c.service.Authenticate(partner)
 	if err != nil {
 		fmt.Println("❌ Erro ao autenticar:", err)
-		return
+		os.Exit(1)
 	}
 
 	fmt.Println("🔐 Token atual:", token.Token)

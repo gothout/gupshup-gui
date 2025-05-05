@@ -22,11 +22,11 @@ type loginServiceImpl struct {
 }
 
 func NewLoginService() LoginService {
-	/*************  ✨ Windsurf Command ⭐  *************/
-	// NewLoginService retorna uma inst ncia do LoginService
-	// que ir  utiliza o cache global para armazenar o token
-	// de autentica o da Gupshup.
-	/*******  8ffd7530-6246-4ae3-9b2f-427a4a259272  *******/
+	/*******************************************************/
+	// NewLoginService retorna uma instancia do LoginService
+	// que ira  utiliza o cache global para armazenar o token
+	// de autenticacao da Gupshup.
+	/*******************************************************/
 	return &loginServiceImpl{cache: gupshupTokenCache}
 }
 

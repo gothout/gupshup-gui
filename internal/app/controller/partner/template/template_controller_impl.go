@@ -19,3 +19,7 @@ func NewAppController(service partner.PartnerService) TemplateController {
 func (c *templateControllerImpl) GetTemplates(appID string) ([]ent.PartnerTemplate, error) {
 	return c.service.TemplateService().GetTemplates(appID)
 }
+
+func (c *templateControllerImpl) GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error) {
+	return c.service.TemplateService().GetTemplateByID(appID, templateID)
+}

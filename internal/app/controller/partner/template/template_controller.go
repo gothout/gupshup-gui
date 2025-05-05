@@ -7,4 +7,5 @@ import (
 // AppController define as ações disponíveis para manipular os apps da Gupshup
 type TemplateController interface {
 	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
+	GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error)
 }
