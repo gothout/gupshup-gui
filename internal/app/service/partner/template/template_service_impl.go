@@ -181,7 +181,6 @@ func (s *templateServiceImpl) UploadImageForTemplate(appID string, filePath stri
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
 
-	// Campo do arquivo
 	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar campo do arquivo: %w", err)
@@ -190,15 +189,13 @@ func (s *templateServiceImpl) UploadImageForTemplate(appID string, filePath stri
 		return "", fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
 	}
 
-	// Campo do tipo de arquivo
 	if err := writer.WriteField("file_type", "image/png"); err != nil {
 		return "", fmt.Errorf("erro ao adicionar campo file_type: %w", err)
 	}
-
 	writer.Close()
 
 	// 4. Monta a requisição
-	url := fmt.Sprintf("%spartner/app/%s/upload", config.URLPartner, appID)
+	url := fmt.Sprintf("%spartner/app/%s/upload/media", config.URLPartner, appID)
 	req, err := http.NewRequest("POST", url, &requestBody)
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar requisição: %w", err)
@@ -206,29 +203,108 @@ func (s *templateServiceImpl) UploadImageForTemplate(appID string, filePath stri
 	req.Header.Set("Authorization", "Bearer "+appToken.Token)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	// 5. Envia
+	// 5. Envia a requisição
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro ao enviar requisição: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 6. Lê e decodifica resposta
+	// 6. Lê e decodifica a resposta
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("erro ao ler body da resposta: %w", err)
+	}
+	//fmt.Println("Body da resposta:", string(bodyBytes))
+
 	var result struct {
 		Status   string `json:"status"`
+		Message  string `json:"message"`
 		HandleID struct {
 			Message string `json:"message"`
 		} `json:"handleId"`
 	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("erro ao decodificar resposta (%s): %w", string(body), err)
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return "", fmt.Errorf("erro ao decodificar resposta (%s): %w", string(bodyBytes), err)
 	}
 
+	fmt.Println("Resposta decodificada:", result)
+
 	if result.Status != "success" || result.HandleID.Message == "" {
-		return "", fmt.Errorf("upload falhou ou handleId ausente: %+v", result)
+		return "", fmt.Errorf("upload falhou: %s", result.Message)
 	}
 
 	return result.HandleID.Message, nil
+}
+
+func (s *templateServiceImpl) CreateTemplateImage(appID string, imagePath string, tpl template.TemplateCreateRequest) (*template.TemplateCreateRequest, error) {
+	// 1. Obtém o token da aplicação
+	appToken, err := appService.NewPartnerAppService(s.auth).GetAppToken(appID)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao obter token da aplicação: %w", err)
+	}
+
+	// 2. Garante os campos obrigatórios
+	tpl.EnableSample = true
+	tpl.AllowTemplateCategoryChange = true
+
+	// 3. Faz o upload da imagem local e obtém o handleId
+	imageID, err := s.UploadImageForTemplate(appID, imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao fazer upload da imagem: %w", err)
+	}
+
+	// 4. Define o ID da imagem no campo correto
+	tpl.ExampleMedia = []string{imageID}
+
+	// 5. Monta o corpo form-urlencoded
+	form := url.Values{}
+	form.Set("elementName", tpl.ElementName)
+	form.Set("languageCode", tpl.LanguageCode)
+	form.Set("category", tpl.Category)
+	form.Set("templateType", tpl.TemplateType)
+	form.Set("vertical", tpl.Vertical)
+	form.Set("header", tpl.Header)
+	form.Set("content", tpl.Content)
+	form.Set("footer", tpl.Footer)
+	form.Set("example", tpl.Example)
+	form.Set("exampleMedia", imageID) // só o ID como string
+	form.Set("exampleHeader", tpl.ExampleHeader)
+	form.Set("enableSample", "true")
+	form.Set("allowTemplateCategoryChange", "true")
+
+	// Serializa os botões (se houver)
+	if len(tpl.Buttons) > 0 {
+		buttonsBytes, err := json.Marshal(tpl.Buttons)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao serializar botões: %w", err)
+		}
+		form.Set("buttons", string(buttonsBytes))
+	}
+
+	// 6. Cria requisição HTTP POST
+	endpoint := fmt.Sprintf("%spartner/app/%s/templates", config.URLPartner, appID)
+	req, err := http.NewRequest("POST", endpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+appToken.Token)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// 7. Executa requisição
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao enviar requisição: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 8. Valida resposta
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("erro na criação do template: %s", string(body))
+	}
+
+	io.Copy(io.Discard, resp.Body) // consome o body corretamente
+
+	return &tpl, nil
 }

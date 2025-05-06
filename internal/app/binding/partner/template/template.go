@@ -10,6 +10,7 @@ type CreateTemplateInput struct {
 	LanguageCode              string                    `json:"languageCode" binding:"required"`
 	Category                  string                    `json:"category" binding:"required"`
 	TemplateType              string                    `json:"templateType" binding:"required"`
+	ExampleMedia              []string                  `json:"images" binding:"omitempty,dive,required"`
 	Header                    string                    `json:"header,omitempty"`
 	Content                   string                    `json:"content" binding:"required"`
 	Footer                    string                    `json:"footer,omitempty"`
@@ -31,6 +32,7 @@ func (c *CreateTemplateInput) ToTemplateCreateRequest() *template.TemplateCreate
 		LanguageCode:                c.LanguageCode,
 		Category:                    c.Category,
 		TemplateType:                c.TemplateType,
+		ExampleMedia:                c.ExampleMedia,
 		Header:                      c.Header,
 		Content:                     c.Content,
 		Footer:                      c.Footer,

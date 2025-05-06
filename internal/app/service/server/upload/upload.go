@@ -11,7 +11,6 @@ import (
 )
 
 // SaveUploadedFile salva o arquivo recebido e retorna o path no diretório /tmp
-// SaveUploadedFile salva o arquivo recebido e retorna o path no diretório /tmp
 func SaveUploadedFile(file *multipart.FileHeader) (string, error) {
 	src, err := file.Open()
 	if err != nil {
@@ -37,6 +36,44 @@ func SaveUploadedFile(file *multipart.FileHeader) (string, error) {
 	}
 	defer dst.Close()
 
+	if _, err := io.Copy(dst, src); err != nil {
+		return "", fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
+	}
+
+	return destPath, nil
+}
+
+// CopyLocalFileToTmp copia um arquivo de um path local e salva no diretório /tmp, retornando o novo caminho
+func CopyLocalFileToTmp(originalPath string) (string, error) {
+	// Abre o arquivo de origem
+	src, err := os.Open(originalPath)
+	if err != nil {
+		return "", fmt.Errorf("erro ao abrir arquivo original: %w", err)
+	}
+	defer src.Close()
+
+	// Gera nome único baseado no original
+	ext := filepath.Ext(originalPath)
+	name := filepath.Base(originalPath[:len(originalPath)-len(ext)])
+	uniqueName := fmt.Sprintf("%s_%s%s", name, uuid.NewString(), ext)
+
+	// Garante que o diretório tmp existe
+	tmpDir := filepath.Join("./internal/app", "tmp")
+	if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("erro ao criar diretório tmp: %w", err)
+	}
+
+	// Define caminho final
+	destPath := filepath.Join(tmpDir, uniqueName)
+
+	// Cria o destino
+	dst, err := os.Create(destPath)
+	if err != nil {
+		return "", fmt.Errorf("erro ao criar arquivo no destino: %w", err)
+	}
+	defer dst.Close()
+
+	// Copia conteúdo
 	if _, err := io.Copy(dst, src); err != nil {
 		return "", fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
 	}

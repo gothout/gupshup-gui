@@ -77,9 +77,10 @@ type TemplateCreateRequest struct {
 	Buttons []TemplateButton `json:"buttons,omitempty"` // Lista de botões: URL, PHONE_NUMBER, QUICK_REPLY, COPY_CODE, etc.
 
 	// Exemplos
-	Example       string `json:"example"`       // Exemplo do conteúdo com preenchimento dos placeholders
-	ExampleHeader string `json:"exampleHeader"` // Exemplo do cabeçalho
-	EnableSample  bool   `json:"enableSample"`  // Obrigatório para criação de qualquer template
+	Example       string   `json:"example"`       // Exemplo do conteúdo com preenchimento dos placeholders
+	ExampleMedia  []string `json:"exampleMedia"`  // Midia para envio no template da Gupshup
+	ExampleHeader string   `json:"exampleHeader"` // Exemplo do cabeçalho
+	EnableSample  bool     `json:"enableSample"`  // Obrigatório para criação de qualquer template
 
 	// Configurações opcionais
 	AllowTemplateCategoryChange bool `json:"allowTemplateCategoryChange"`         // Se true, permite que o Meta altere a categoria automaticamente

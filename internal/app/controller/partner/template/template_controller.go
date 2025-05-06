@@ -9,4 +9,5 @@ type TemplateController interface {
 	GetTemplates(appID string) ([]ent.PartnerTemplate, error)
 	GetTemplateByID(appID, templateID string) (*ent.PartnerTemplate, error)
 	CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error)
+	CreateTemplateImage(appID string, imagePath string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error)
 }

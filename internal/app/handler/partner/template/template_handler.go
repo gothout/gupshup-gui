@@ -76,8 +76,6 @@ func (h *TemplateHandler) GetTemplateByIDHandler(c *gin.Context) {
 func (h *TemplateHandler) CreateTemplateTextHandler(c *gin.Context) {
 	// 1. Captura o app_id da URL
 	appID := c.Param("app_id")
-	//fmt.Println("AppID recebido:", appID)
-
 	if appID == "" || appID == ":app_id" {
 		rest := rest_err.NewBadRequestValidationError("App ID não informado", []rest_err.Causes{
 			{Field: "app_id", Message: "O ID do app é obrigatório na URL"},
@@ -127,6 +125,27 @@ func (h *TemplateHandler) CreateTemplateTextHandler(c *gin.Context) {
 	switch req.TemplateType {
 	case "TEXT":
 		createdTemplate, err := h.controller.CreateTemplateText(appID, *req)
+		if err != nil {
+			rest := rest_err.NewBadRequestValidationError("Imagem não enviada", []rest_err.Causes{
+				{Field: "controller", Message: err.Error()},
+			})
+			c.JSON(rest.Code, rest)
+			return
+		}
+		c.JSON(http.StatusCreated, createdTemplate)
+
+	case "IMAGE":
+		if len(req.ExampleMedia) != 1 {
+			rest := rest_err.NewBadRequestValidationError("Imagem ausente ou múltiplas imagens enviadas", []rest_err.Causes{
+				{Field: "images", Message: "Você deve informar exatamente 1 imagem salva localmente"},
+			})
+			c.JSON(rest.Code, rest)
+			return
+		}
+		imagePath := req.ExampleMedia[0]
+		fmt.Println("Caminho da imagem:", imagePath)
+
+		createdTemplate, err := h.controller.CreateTemplateImage(appID, imagePath, *req)
 		if err != nil {
 			rest := rest_err.NewInternalServerError("Erro ao criar template", []rest_err.Causes{
 				{Field: "controller", Message: err.Error()},

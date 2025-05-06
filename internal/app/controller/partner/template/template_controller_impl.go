@@ -27,3 +27,7 @@ func (c *templateControllerImpl) GetTemplateByID(appID, templateID string) (*ent
 func (c *templateControllerImpl) CreateTemplateText(appID string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error) {
 	return c.service.TemplateService().CreateTemplateText(appID, template)
 }
+
+func (c *templateControllerImpl) CreateTemplateImage(appID string, imagePath string, template ent.TemplateCreateRequest) (*ent.TemplateCreateRequest, error) {
+	return c.service.TemplateService().CreateTemplateImage(appID, imagePath, template)
+}
